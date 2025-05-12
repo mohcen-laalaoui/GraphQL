@@ -1,6 +1,13 @@
 const express = require("express");
 const { graphqlHTTP } = require("express-graphql");
-const { GraphQLSchema, GraphQLObjectType, GraphQLString } = require("graphql");
+const {
+  GraphQLSchema,
+  GraphQLObjectType,
+  GraphQLString,
+  GraphQLList,
+  GraphQLInt,
+  GraphQLNonNull,
+} = require("graphql");
 
 const app = express();
 app.use(express.json());
@@ -49,14 +56,26 @@ const books = [
   },
 ];
 
+const BookType = new GraphQLObjectType({
+  name: "Book",
+  description: "This represents a book written by an author",
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    title: { type: GraphQLNonNull(GraphQLString) },
+    genre: { type: GraphQLNonNull(GraphQLString) },
+    authorId: { type: GraphQLNonNull(GraphQLInt) },
+  }),
+});
+
 const RootQueryType = new GraphQLObjectType({
   name: "RootQueryType",
   description: "Root Query",
   fields: () => ({
-    hello: {
-      type: HelloType,
+    books: {
+      type: new GraphQLList(BookType),
+      description: "List of all books",
       resolve: () => {
-        return { message: "Hello World" };
+        return books;
       },
     },
   }),
@@ -64,17 +83,7 @@ const RootQueryType = new GraphQLObjectType({
 
 // Define the schema
 const schema = new GraphQLSchema({
-  query: new GraphQLObjectType({
-    name: "RootQueryType",
-    fields: {
-      hello: {
-        type: HelloType,
-        resolve: () => {
-          return { message: "Hello World" };
-        },
-      },
-    },
-  }),
+  query: RootQueryType,
 });
 
 app.use(
